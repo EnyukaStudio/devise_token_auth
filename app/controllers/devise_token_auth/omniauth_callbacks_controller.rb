@@ -77,9 +77,6 @@ module DeviseTokenAuth
     # break out provider attribute assignment for easy method extension
     def assign_provider_attrs(user, auth_hash)
       user.assign_attributes({
-        nickname: auth_hash['info']['nickname'],
-        name:     auth_hash['info']['name'],
-        image:    auth_hash['info']['image'],
         email:    auth_hash['info']['email']
       })
     end
@@ -230,7 +227,7 @@ module DeviseTokenAuth
 
     def get_resource_from_auth_hash
       # find or create user by provider and provider uid
-      @resource = resource_class.where({
+      @resource = Authentication.where({
         uid:      auth_hash['uid'],
         provider: auth_hash['provider']
       }).first_or_initialize

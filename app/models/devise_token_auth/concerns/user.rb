@@ -15,31 +15,14 @@ module DeviseTokenAuth::Concerns::User
   end
 
   included do
-    # Hack to check if devise is already enabled
-    unless self.method_defined?(:devise_modules)
-      devise :database_authenticatable, :registerable,
-          :recoverable, :trackable, :validatable, :confirmable
-    else
-      self.devise_modules.delete(:omniauthable)
-    end
-
     unless tokens_has_json_column_type?
       serialize :tokens, JSON
     end
-
-    validates :email, presence: true, email: true, if: Proc.new { |u| u.provider == 'email' }
-    validates_presence_of :uid, if: Proc.new { |u| u.provider != 'email' }
-
-    # only validate unique emails among email registration users
-    validate :unique_email_user, on: :create
 
     # can't set default on text fields in mysql, simulate here instead.
     after_save :set_empty_token_hash
     after_initialize :set_empty_token_hash
 
-    # keep uid in sync with email
-    before_save :sync_uid
-    before_create :sync_uid
 
     # get rid of dead tokens
     before_save :destroy_expired_tokens
@@ -48,15 +31,6 @@ module DeviseTokenAuth::Concerns::User
     attr_writer :allow_password_change
     def allow_password_change
       @allow_password_change || false
-    end
-
-    # don't use default devise email validation
-    def email_required?
-      false
-    end
-
-    def email_changed?
-      false
     end
 
     # override devise method to include additional info as opts hash
@@ -178,12 +152,12 @@ module DeviseTokenAuth::Concerns::User
       last_token: last_token,
       updated_at: Time.now
     }
-	
+
     max_clients = DeviseTokenAuth.max_number_of_devices
     while self.tokens.keys.length > 0 and max_clients < self.tokens.keys.length
       oldest_token = self.tokens.min_by { |cid, v| v[:expiry] || v["expiry"] }
       self.tokens.delete(oldest_token.first)
-    end	
+    end
 
     self.save!
 
@@ -236,19 +210,8 @@ module DeviseTokenAuth::Concerns::User
 
   protected
 
-  # only validate unique email among users that registered by email
-  def unique_email_user
-    if provider == 'email' and self.class.where(provider: 'email', email: email).count > 0
-      errors.add(:email, :already_in_use)
-    end
-  end
-
   def set_empty_token_hash
     self.tokens ||= {} if has_attribute?(:tokens)
-  end
-
-  def sync_uid
-    self.uid = email if provider == 'email'
   end
 
   def destroy_expired_tokens
