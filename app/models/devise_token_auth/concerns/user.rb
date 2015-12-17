@@ -177,13 +177,11 @@ module DeviseTokenAuth::Concerns::User
       "token-type"   => "Bearer",
       "client"       => client_id,
       "expiry"       => expiry.to_s,
-      "uid"          => self.uid
     }
   end
 
 
   def build_auth_url(base_url, args)
-    args[:uid]    = self.uid
     args[:expiry] = self.tokens[args[:client_id]]['expiry']
 
     DeviseTokenAuth::Url.generate(base_url, args)
