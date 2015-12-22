@@ -1,3 +1,5 @@
+require 'securerandom'
+
 module DeviseTokenAuth
   class RegistrationsController < DeviseTokenAuth::ApplicationController
     before_filter :set_user_by_token, :only => [:destroy, :update]
@@ -26,6 +28,8 @@ module DeviseTokenAuth
         return render_create_error_missing_confirm_success_url
       end
 
+      @resource.uuid = SecureRandom.uuid()
+
       # if whitelist is set, validate redirect_url against whitelist
       if DeviseTokenAuth.redirect_whitelist
         unless DeviseTokenAuth.redirect_whitelist.include?(@redirect_url)
@@ -36,6 +40,7 @@ module DeviseTokenAuth
       begin
         # override email confirmation, must be sent manually from ctrl
         resource_class.skip_callback("create", :after, :send_on_create_confirmation_instructions)
+
         if @resource.save
           yield @resource if block_given?
 

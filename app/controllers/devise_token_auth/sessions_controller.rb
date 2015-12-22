@@ -3,6 +3,8 @@ module DeviseTokenAuth
   class SessionsController < DeviseTokenAuth::ApplicationController
     before_filter :set_user_by_token, :only => [:destroy]
     after_action :reset_session, :only => [:destroy]
+    skip_before_action :verify_authenticity_token
+
 
     def new
       render_new_error

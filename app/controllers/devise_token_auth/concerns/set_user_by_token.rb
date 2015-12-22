@@ -26,6 +26,7 @@ module DeviseTokenAuth::Concerns::SetUserByToken
     # parse header for values necessary for authentication
     @token     = request.headers['access-token'] || params['access-token']
     @client_id = request.headers['client'] || params['client']
+    @uuid      = request.headers['uuid'] || params['uuid']
 
     # client_id isn't required, set to 'default' if absent
     @client_id ||= 'default'
@@ -51,8 +52,8 @@ module DeviseTokenAuth::Concerns::SetUserByToken
 
     return false unless @token
 
-    # mitigate timing attacks by finding by uid instead of auth token
-    user = token && rc.find_by_token(token)
+    # mitigate timing attacks by finding by uuid instead of auth token
+    user = @uuid && rc.find_by_uuid(@uuid)
 
     if user && user.valid_token?(@token, @client_id)
       sign_in(:user, user, store: false, bypass: true)
