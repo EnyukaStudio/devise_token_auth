@@ -8,7 +8,7 @@ module DeviseTokenAuth
     skip_after_filter :update_auth_header, :only => [:create, :destroy]
 
     def create
-      @resource            = resource_class.new(sign_up_params)
+      @resource = resource_class.new(sign_up_params.except(:role))
 
       # honor devise configuration for case_insensitive_keys
       if resource_class.case_insensitive_keys.include?(:email)
@@ -16,6 +16,8 @@ module DeviseTokenAuth
       else
         @resource.email = sign_up_params[:email]
       end
+
+      @resource.roles << Role.find_by_name(sign_up_params[:role])
 
       # give redirect value from params priority
       @redirect_url = params[:confirm_success_url]
@@ -101,11 +103,13 @@ module DeviseTokenAuth
     end
 
     def sign_up_params
-      params.permit(devise_parameter_sanitizer.for(:sign_up))
+      params.require(:registration).permit(:email, :password, :password_confirmation, :role)
+      #params.permit(devise_parameter_sanitizer.for(:sign_up))
     end
 
     def account_update_params
-      params.permit(devise_parameter_sanitizer.for(:account_update))
+      params.permit(:email, :password, :password_confirmation)
+      #params.permit(devise_parameter_sanitizer.for(:account_update))
     end
 
     protected
