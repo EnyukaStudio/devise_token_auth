@@ -177,6 +177,7 @@ module DeviseTokenAuth::Concerns::User
       "token-type"   => "Bearer",
       "client"       => client_id,
       "expiry"       => expiry.to_s,
+      "uuid"         => self.uuid
     }
   end
 
